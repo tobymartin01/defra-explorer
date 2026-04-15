@@ -1,16 +1,78 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# 🌍 DEFRA Emissions Factor Explorer
 
-Currently, two official plugins are available:
+A fast, searchable React tool for exploring UK DEFRA greenhouse gas (GHG) conversion factors across multiple years.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Built for carbon accounting, sustainability analysis, and quick emissions calculations.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Features
 
-## Expanding the ESLint configuration
+### 🔍 Fuzzy Search
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Powered by Fuse.js
+- Search by:
+  - fuel (e.g. diesel, petrol)
+  - activity (e.g. flights, electricity)
+  - categories
+
+---
+
+### 🧠 Smart Filtering
+
+Filter results by:
+
+- 📅 Year (2024, 2025, etc.)
+- 🏢 Scope (Scope 1, 2, 3)
+- 📂 Category (Level 1)
+- 📏 Unit (e.g. kWh, litres, km)
+- 🌱 GHG Unit (defaults to **kg CO2e**)
+
+---
+
+### 🧮 Emissions Calculator
+
+- Enter a quantity (e.g. 100 kWh)
+- Instantly calculates emissions:
+  - Emissions = Quantity × Emission Factor
+
+---
+
+
+### 📋 Copy to Clipboard
+
+Quickly copy formatted factors:
+
+0.233 kg CO2e/kWh (Electricity, 2025)
+
+---
+
+### ⚡ Performance Optimised
+
+- Results limited to 50 rows
+- Precomputed search blobs
+- Fast filtering per selected year
+
+---
+
+## 🗂️ Data Structure
+
+Each dataset is cleaned into a standard JSON format:
+
+```json
+{
+  "id": "1",
+  "name": "Electricity: UK",
+  "display_name": "Electricity: UK (kWh)",
+  "scope": "Scope 2",
+  "level1": "Energy",
+  "level2": "Electricity",
+  "unit": "kWh",
+  "ghg_unit": "kg CO2e",
+  "factor": 0.233,
+  "year": 2025
+}
+
+---
+```
