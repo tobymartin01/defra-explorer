@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Fuse from "fuse.js";
+import { expandQuery } from "./utils/searchUtils.jsx";
 
 // Import datasets
 import data2025 from "./data/defra_2025_clean.json";
@@ -37,9 +38,17 @@ export default function DefraExplorer() {
 
   // Search + filters
   const results = useMemo(() => {
+    const expandedQuery = query ? expandQuery(query) : "";
+
     let filtered = query
-      ? fuse.search(query).map(r => r.item)
+      ? expandQuery(query)
+          .split(" ")
+          .flatMap(q => fuse.search(q))
+          .map(r => r.item)
       : data;
+
+      // remove duplicates
+      filtered = Array.from(new Set(filtered));
 
     if (scopeFilter) {
       filtered = filtered.filter(item => item.scope === scopeFilter);
