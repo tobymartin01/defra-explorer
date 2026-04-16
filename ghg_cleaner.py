@@ -4,7 +4,7 @@ import re
 # -------------------------------
 # 📥 Load CSV
 # -------------------------------
-file_path = "defra_2024.csv"
+file_path = "defra_2022.csv"
 
 df = pd.read_csv(file_path, encoding="latin1")
 

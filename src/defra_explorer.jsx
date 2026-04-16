@@ -4,11 +4,16 @@ import { expandQuery } from "./utils/searchUtils";
 
 import data2025 from "./data/defra_2025_clean.json";
 import data2024 from "./data/defra_2024_clean.json";
+import data2023 from "./data/defra_2023_clean.json";
+import data2022 from "./data/defra_2022_clean.json";
 
 const datasets = {
   2025: data2025,
   2024: data2024,
-};
+  2023: data2023,
+  2022: data2022
+};  
+
 
 export default function DefraExplorer() {
   const [year, setYear] = useState("2025");
