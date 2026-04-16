@@ -12,8 +12,7 @@ const datasets = {
   2024: data2024,
   2023: data2023,
   2022: data2022
-};  
-
+};
 
 export default function DefraExplorer() {
   const [year, setYear] = useState("2025");
@@ -23,8 +22,20 @@ export default function DefraExplorer() {
   const [unitFilter, setUnitFilter] = useState("");
   const [ghgUnitFilter, setGhgUnitFilter] = useState("kg CO2e");
   const [quantity, setQuantity] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
 
   const data = datasets[year] || [];
+
+  // ======================
+  // Theme
+  // ======================
+  const theme = {
+    background: darkMode ? "#121212" : "#ffffff",
+    text: darkMode ? "#e5e5e5" : "#000000",
+    card: darkMode ? "#1e1e1e" : "#ffffff",
+    border: darkMode ? "#333" : "#ddd",
+    subtext: darkMode ? "#aaa" : "#555"
+  };
 
   // ======================
   // Fuse setup
@@ -44,13 +55,12 @@ export default function DefraExplorer() {
   }, [data]);
 
   // ======================
-  // Search Logic (simple + stable)
+  // Search Logic
   // ======================
   const results = useMemo(() => {
     if (!query) return [];
 
     const terms = expandQuery(query);
-
     let all = [];
 
     terms.forEach(term => {
@@ -66,9 +76,7 @@ export default function DefraExplorer() {
 
     let final = Array.from(map.values());
 
-    // ======================
     // Filters
-    // ======================
     if (scopeFilter) {
       final = final.filter(i => i.scope === scopeFilter);
     }
@@ -123,13 +131,49 @@ export default function DefraExplorer() {
   // UI
   // ======================
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div
+      style={{
+        padding: "20px",
+        fontFamily: "Arial",
+        background: theme.background,
+        color: theme.text,
+        minHeight: "100vh",
+        transition: "0.2s",
+        position: "relative"
+      }}
+    >
       <h2>DEFRA Factor Finder</h2>
+
+      {/* Dark Mode Toggle */}
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          style={{
+            padding: "6px 10px",
+            cursor: "pointer",
+            borderRadius: "6px",
+            border: `1px solid ${theme.border}`,
+            background: theme.card,
+            color: theme.text
+          }}
+        >
+          {darkMode ? "☀️ Light" : "🌙 Dark"}
+        </button>
+      </div>
 
       {/* Year */}
       <div style={{ marginBottom: "15px" }}>
         <label><strong>Select Year: </strong></label>
-        <select value={year} onChange={e => setYear(e.target.value)}>
+        <select
+          value={year}
+          onChange={e => setYear(e.target.value)}
+          style={{
+            marginLeft: "10px",
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`
+          }}
+        >
           {Object.keys(datasets).sort((a, b) => b - a).map(y => (
             <option key={y} value={y}>{y}</option>
           ))}
@@ -145,34 +189,70 @@ export default function DefraExplorer() {
           width: "100%",
           padding: "10px",
           fontSize: "16px",
-          marginBottom: "10px"
+          marginBottom: "10px",
+          background: theme.card,
+          color: theme.text,
+          border: `1px solid ${theme.border}`,
+          borderRadius: "6px"
         }}
       />
 
       {/* Filters */}
       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-        <select value={scopeFilter} onChange={e => setScopeFilter(e.target.value)}>
+        <select
+          value={scopeFilter}
+          onChange={e => setScopeFilter(e.target.value)}
+          style={{
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`
+          }}
+        >
           <option value="">All Scopes</option>
           {scopes.map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
 
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+        <select
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          style={{
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`
+          }}
+        >
           <option value="">All Categories</option>
           {categories.map(c => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
 
-        <select value={unitFilter} onChange={e => setUnitFilter(e.target.value)}>
+        <select
+          value={unitFilter}
+          onChange={e => setUnitFilter(e.target.value)}
+          style={{
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`
+          }}
+        >
           <option value="">All Units</option>
           {units.map(u => (
             <option key={u} value={u}>{u}</option>
           ))}
         </select>
 
-        <select value={ghgUnitFilter} onChange={e => setGhgUnitFilter(e.target.value)}>
+        <select
+          value={ghgUnitFilter}
+          onChange={e => setGhgUnitFilter(e.target.value)}
+          style={{
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`
+          }}
+        >
           {ghgUnits.map(u => (
             <option key={u} value={u}>{u}</option>
           ))}
@@ -187,6 +267,13 @@ export default function DefraExplorer() {
             setQuantity("");
             setGhgUnitFilter("kg CO2e");
           }}
+          style={{
+            cursor: "pointer",
+            borderRadius: "6px",
+            border: `1px solid ${theme.border}`,
+            background: theme.card,
+            color: theme.text
+          }}
         >
           Reset
         </button>
@@ -199,7 +286,14 @@ export default function DefraExplorer() {
           value={quantity}
           onChange={e => setQuantity(e.target.value)}
           placeholder="Enter quantity"
-          style={{ padding: "8px", width: "250px" }}
+          style={{
+            padding: "8px",
+            width: "250px",
+            background: theme.card,
+            color: theme.text,
+            border: `1px solid ${theme.border}`,
+            borderRadius: "6px"
+          }}
         />
       </div>
 
@@ -212,7 +306,7 @@ export default function DefraExplorer() {
         )}
 
         {!query && (
-          <p style={{ color: "#777" }}>
+          <p style={{ color: theme.subtext }}>
             Start searching for emission factors...
           </p>
         )}
@@ -226,15 +320,16 @@ export default function DefraExplorer() {
             <div
               key={`${item.id}-${year}`}
               style={{
-                border: "1px solid #ddd",
+                border: `1px solid ${theme.border}`,
                 padding: "10px",
                 marginBottom: "10px",
-                borderRadius: "8px"
+                borderRadius: "8px",
+                background: theme.card
               }}
             >
               <strong>{item.name}</strong>
 
-              <div style={{ fontSize: "13px", color: "#555" }}>
+              <div style={{ fontSize: "13px", color: theme.subtext }}>
                 {[item.level1, item.level2, item.level3, item.level4]
                   .filter(Boolean)
                   .join(" → ")}
@@ -244,12 +339,12 @@ export default function DefraExplorer() {
                 <strong>{item.factor}</strong> {item.ghg_unit} / {item.unit}
               </div>
 
-              <div style={{ fontSize: "12px", color: "#777" }}>
+              <div style={{ fontSize: "12px", color: theme.subtext }}>
                 {item.scope} | {year}
               </div>
 
               {emissions && (
-                <div style={{ color: "green", fontWeight: "bold" }}>
+                <div style={{ color: "lightgreen", fontWeight: "bold" }}>
                   Emissions: {emissions} {item.ghg_unit}
                 </div>
               )}
