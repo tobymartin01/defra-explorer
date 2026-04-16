@@ -29,5 +29,5 @@ export function expandQuery(query) {
     }
   }
 
-  return [...new Set(expanded)].join(" ");
+  return [...new Set(expanded)]; // ✅ array, NOT string
 }

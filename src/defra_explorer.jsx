@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Fuse from "fuse.js";
-import { expandQuery } from "./utils/searchUtils.jsx";
+import { expandQuery } from "./utils/searchUtils";
 
-// Import datasets
 import data2025 from "./data/defra_2025_clean.json";
 import data2024 from "./data/defra_2024_clean.json";
 
@@ -17,76 +16,107 @@ export default function DefraExplorer() {
   const [scopeFilter, setScopeFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
-  const [ghgUnitFilter, setGhgUnitFilter] = useState("kg CO2e"); // ✅ default
+  const [ghgUnitFilter, setGhgUnitFilter] = useState("kg CO2e");
   const [quantity, setQuantity] = useState("");
 
   const data = datasets[year] || [];
 
+  // ======================
   // Fuse setup
+  // ======================
   const fuse = useMemo(() => {
-  return new Fuse(data, {
-    keys: [
-      { name: "name", weight: 0.5 },
-      { name: "level1", weight: 0.2 },
-      { name: "level2", weight: 0.1 },
-      { name: "level3", weight: 0.1 },
-      { name: "level4", weight: 0.1 } // ✅ added
-    ],
-    threshold: 0.3
-  });
-}, [data]);
+    return new Fuse(data, {
+      keys: [
+        { name: "name", weight: 0.5 },
+        { name: "level1", weight: 0.2 },
+        { name: "level2", weight: 0.1 },
+        { name: "level3", weight: 0.1 },
+        { name: "level4", weight: 0.1 }
+      ],
+      threshold: 0.4,
+      ignoreLocation: true
+    });
+  }, [data]);
 
-  // Search + filters
+  // ======================
+  // Search Logic (simple + stable)
+  // ======================
   const results = useMemo(() => {
-    const expandedQuery = query ? expandQuery(query) : "";
+    if (!query) return [];
 
-    let filtered = query
-      ? expandQuery(query)
-          .split(" ")
-          .flatMap(q => fuse.search(q))
-          .map(r => r.item)
-      : data;
+    const terms = expandQuery(query);
 
-      // remove duplicates
-      filtered = Array.from(new Set(filtered));
+    let all = [];
 
+    terms.forEach(term => {
+      const res = fuse.search(term).slice(0, 50);
+      all.push(...res.map(r => r.item));
+    });
+
+    // Deduplicate
+    const map = new Map();
+    all.forEach(item => {
+      map.set(item.id, item);
+    });
+
+    let final = Array.from(map.values());
+
+    // ======================
+    // Filters
+    // ======================
     if (scopeFilter) {
-      filtered = filtered.filter(item => item.scope === scopeFilter);
+      final = final.filter(i => i.scope === scopeFilter);
     }
 
     if (categoryFilter) {
-      filtered = filtered.filter(item => item.level1 === categoryFilter);
+      final = final.filter(i => i.level1 === categoryFilter);
     }
 
     if (unitFilter) {
-      filtered = filtered.filter(item => item.unit === unitFilter);
+      final = final.filter(i => i.unit === unitFilter);
     }
 
     if (ghgUnitFilter) {
-      filtered = filtered.filter(item => item.ghg_unit === ghgUnitFilter);
+      final = final.filter(i => i.ghg_unit === ghgUnitFilter);
     }
 
-    return filtered.slice(0, 50);
-  }, [query, scopeFilter, categoryFilter, unitFilter, ghgUnitFilter, fuse, data]);
+    return final.slice(0, 50);
+  }, [
+    query,
+    fuse,
+    data,
+    scopeFilter,
+    categoryFilter,
+    unitFilter,
+    ghgUnitFilter
+  ]);
 
-  // Filter values
-  const scopes = [...new Set(data.map(d => d.scope))].filter(Boolean).sort();
-  const categories = [...new Set(data.map(d => d.level1))].filter(Boolean).sort();
-  const units = [...new Set(data.map(d => d.unit))].filter(Boolean).sort();
-  const ghgUnits = [...new Set(data.map(d => d.ghg_unit))].filter(Boolean).sort();
+  // ======================
+  // Filter options
+  // ======================
+  const scopes = useMemo(
+    () => [...new Set(data.map(d => d.scope))].filter(Boolean).sort(),
+    [data]
+  );
 
-  // Smart validation on year change
-  useEffect(() => {
-    if (scopeFilter && !scopes.includes(scopeFilter)) setScopeFilter("");
-    if (categoryFilter && !categories.includes(categoryFilter)) setCategoryFilter("");
-    if (unitFilter && !units.includes(unitFilter)) setUnitFilter("");
+  const categories = useMemo(
+    () => [...new Set(data.map(d => d.level1))].filter(Boolean).sort(),
+    [data]
+  );
 
-    // Reset GHG unit ONLY if not available
-    if (ghgUnitFilter && !ghgUnits.includes(ghgUnitFilter)) {
-      setGhgUnitFilter("kg CO2e"); // fallback
-    }
-  }, [year, scopes, categories, units, ghgUnits]);
+  const units = useMemo(
+    () => [...new Set(data.map(d => d.unit))].filter(Boolean).sort(),
+    [data]
+  );
 
+  const ghgUnits = useMemo(
+    () => [...new Set(data.map(d => d.ghg_unit))].filter(Boolean).sort(),
+    [data]
+  );
+
+  // ======================
+  // UI
+  // ======================
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h2>DEFRA Factor Finder</h2>
@@ -103,10 +133,9 @@ export default function DefraExplorer() {
 
       {/* Search */}
       <input
-        type="text"
-        placeholder="Search (e.g. diesel, electricity, flight...)"
         value={query}
         onChange={e => setQuery(e.target.value)}
+        placeholder="Search (diesel, kerosene, electricity...)"
         style={{
           width: "100%",
           padding: "10px",
@@ -116,54 +145,55 @@ export default function DefraExplorer() {
       />
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
         <select value={scopeFilter} onChange={e => setScopeFilter(e.target.value)}>
           <option value="">All Scopes</option>
-          {scopes.map(scope => (
-            <option key={scope} value={scope}>{scope}</option>
+          {scopes.map(s => (
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
 
         <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
           <option value="">All Categories</option>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+          {categories.map(c => (
+            <option key={c} value={c}>{c}</option>
           ))}
         </select>
 
         <select value={unitFilter} onChange={e => setUnitFilter(e.target.value)}>
           <option value="">All Units</option>
-          {units.map(unit => (
-            <option key={unit} value={unit}>{unit}</option>
+          {units.map(u => (
+            <option key={u} value={u}>{u}</option>
           ))}
         </select>
 
-        {/* ✅ NEW GHG UNIT FILTER */}
         <select value={ghgUnitFilter} onChange={e => setGhgUnitFilter(e.target.value)}>
-          {ghgUnits.map(unit => (
-            <option key={unit} value={unit}>{unit}</option>
+          {ghgUnits.map(u => (
+            <option key={u} value={u}>{u}</option>
           ))}
         </select>
 
-        <button onClick={() => {
-          setQuery("");
-          setScopeFilter("");
-          setCategoryFilter("");
-          setUnitFilter("");
-          setQuantity("");
-          setGhgUnitFilter("kg CO2e"); // reset to default
-        }}>
-          Reset Filters
+        <button
+          onClick={() => {
+            setQuery("");
+            setScopeFilter("");
+            setCategoryFilter("");
+            setUnitFilter("");
+            setQuantity("");
+            setGhgUnitFilter("kg CO2e");
+          }}
+        >
+          Reset
         </button>
       </div>
 
       {/* Quantity */}
-      <div style={{ marginBottom: "15px" }}>
+      <div style={{ marginTop: "10px" }}>
         <input
           type="number"
-          placeholder="Enter quantity (e.g. litres, kWh, km...)"
           value={quantity}
           onChange={e => setQuantity(e.target.value)}
+          placeholder="Enter quantity"
           style={{ padding: "8px", width: "250px" }}
         />
       </div>
@@ -172,7 +202,15 @@ export default function DefraExplorer() {
 
       {/* Results */}
       <div>
-        {results.length === 0 && <p>No results found</p>}
+        {results.length === 0 && query && (
+          <p>No results found</p>
+        )}
+
+        {!query && (
+          <p style={{ color: "#777" }}>
+            Start searching for emission factors...
+          </p>
+        )}
 
         {results.map(item => {
           const emissions = quantity
@@ -181,23 +219,23 @@ export default function DefraExplorer() {
 
           return (
             <div
-              key={`${item.id}-${item.name}-${year}`}
+              key={`${item.id}-${year}`}
               style={{
                 border: "1px solid #ddd",
-                borderRadius: "8px",
                 padding: "10px",
-                marginBottom: "10px"
+                marginBottom: "10px",
+                borderRadius: "8px"
               }}
             >
               <strong>{item.name}</strong>
 
-              <div style={{ fontSize: "14px", color: "#555" }}>
+              <div style={{ fontSize: "13px", color: "#555" }}>
                 {[item.level1, item.level2, item.level3, item.level4]
                   .filter(Boolean)
                   .join(" → ")}
               </div>
 
-              <div style={{ marginTop: "5px" }}>
+              <div>
                 <strong>{item.factor}</strong> {item.ghg_unit} / {item.unit}
               </div>
 
@@ -206,21 +244,10 @@ export default function DefraExplorer() {
               </div>
 
               {emissions && (
-                <div style={{ marginTop: "8px", fontWeight: "bold", color: "green" }}>
+                <div style={{ color: "green", fontWeight: "bold" }}>
                   Emissions: {emissions} {item.ghg_unit}
                 </div>
               )}
-
-              <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    `${item.factor} ${item.ghg_unit}/${item.unit} (${item.name}, ${year})`
-                  )
-                }
-                style={{ marginTop: "5px" }}
-              >
-                Copy
-              </button>
             </div>
           );
         })}
