@@ -23,16 +23,17 @@ export default function DefraExplorer() {
 
   // Fuse setup
   const fuse = useMemo(() => {
-    return new Fuse(data, {
-      keys: [
-        { name: "name", weight: 0.6 },
-        { name: "level1", weight: 0.2 },
-        { name: "level2", weight: 0.1 },
-        { name: "level3", weight: 0.1 }
-      ],
-      threshold: 0.3
-    });
-  }, [data]);
+  return new Fuse(data, {
+    keys: [
+      { name: "name", weight: 0.5 },
+      { name: "level1", weight: 0.2 },
+      { name: "level2", weight: 0.1 },
+      { name: "level3", weight: 0.1 },
+      { name: "level4", weight: 0.1 } // ✅ added
+    ],
+    threshold: 0.3
+  });
+}, [data]);
 
   // Search + filters
   const results = useMemo(() => {
@@ -182,7 +183,9 @@ export default function DefraExplorer() {
               <strong>{item.name}</strong>
 
               <div style={{ fontSize: "14px", color: "#555" }}>
-                {item.level1} → {item.level2}
+                {[item.level1, item.level2, item.level3, item.level4]
+                  .filter(Boolean)
+                  .join(" → ")}
               </div>
 
               <div style={{ marginTop: "5px" }}>

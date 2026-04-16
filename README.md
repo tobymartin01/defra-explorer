@@ -39,6 +39,7 @@ Filter results by:
 
 ---
 
+git
 
 ### 📋 Copy to Clipboard
 
